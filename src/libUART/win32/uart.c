@@ -5,9 +5,9 @@
  * Project  : libUART
  * Author   : Copyright (C) 2018-2020 Johannes Krottmayer <krjdev@gmail.com>
  * Created  : 2019-11-20
- * Modified : 2020-01-30
+ * Modified : 2020-09-26
  * Revised  : 
- * Version  : 0.2.1.0
+ * Version  : 0.2.2.0
  * License  : ISC (see file LICENSE.txt)
  *
  * NOTE: This code is currently below version 1.0, and therefore is considered
@@ -27,6 +27,70 @@
 #include "error.h"
 #include "uart.h"
 
+/* COMMPROP structure */
+/* COMMPROP.dwMaxBaud member */
+#define WIN_BAUD_075                0x00000001
+#define WIN_BAUD_110                0x00000002
+#define WIN_BAUD_134_5              0x00000004
+#define WIN_BAUD_150                0x00000008
+#define WIN_BAUD_300                0x00000010
+#define WIN_BAUD_600                0x00000020
+#define WIN_BAUD_1200               0x00000040
+#define WIN_BAUD_1800               0x00000080
+#define WIN_BAUD_2400               0x00000100
+#define WIN_BAUD_4800               0x00000200
+#define WIN_BAUD_7200               0x00000400
+#define WIN_BAUD_9600               0x00000800
+#define WIN_BAUD_14400              0x00001000
+#define WIN_BAUD_19200              0x00002000
+#define WIN_BAUD_38400              0x00004000
+#define WIN_BAUD_56K                0x00008000
+#define WIN_BAUD_57600              0x00040000
+#define WIN_BAUD_115200             0x00020000
+#define WIN_BAUD_128K               0x00010000
+#define WIN_BAUD_USER               0x10000000
+
+/* COMMPROP.dwSettableParams member */
+#define WIN_SP_BAUD                 0x0002
+#define WIN_SP_DATABITS             0x0004
+#define WIN_SP_HANDSHAKING          0x0010
+#define WIN_SP_PARITY               0x0001
+#define WIN_SP_PARITY_CHECK         0x0020
+#define WIN_SP_STOPBITS             0x0008
+
+/* COMMPROP.wSettableData member */
+#define WIN_DATABITS_5              0x0001
+#define WIN_DATABITS_6              0x0002
+#define WIN_DATABITS_7              0x0004
+#define WIN_DATABITS_8              0x0008
+#define WIN_DATABITS_16             0x0010
+#define WIN_DATABITS_16X            0x0020
+
+/* COMMPROP.wSettableStopParity member */
+#define WIN_STOPBITS_10             0x0001
+#define WIN_STOPBITS_15             0x0002
+#define WIN_STOPBITS_20             0x0004
+#define WIN_PARITY_NONE             0x0100
+#define WIN_PARITY_ODD              0x0200
+#define WIN_PARITY_EVEN             0x0400
+
+int get_prop(struct _uart *uart)
+{
+    BOOL ret;
+    
+    ret = GetCommProperties(uart->h, &uart->prop);
+    
+    if (!ret) {
+        error("GetCommProperties() failed", 1);
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* 
+ * HACK: Maybe removed on further releases.
+ */
 int uart_baud_valid(int value)
 {
     int E[] = {
@@ -62,6 +126,11 @@ int uart_init_baud(struct _uart *uart)
     
     if (!ret) {
         error("GetCommState() failed", 1);
+        return -1;
+    }
+    
+    if (!(uart->prop.dwSettableParams & SP_BAUD)) {
+        error("Hardware/Driver doesn't support settable baud rate", 0);
         return -1;
     }
     
@@ -106,14 +175,14 @@ int uart_init_baud(struct _uart *uart)
         dcb.BaudRate = CBR_256000;
         break;
     default:
-        error("invalid Baud Rate", 0);
+        error("Invalid baud rate", 0);
         return -1;
     }
     
     ret = SetCommState(uart->h, &dcb);
     
     if (!ret) {
-        error("SetCommState() failed", 1);
+        error("Baud Rate: SetCommState() failed", 1);
         return -1;
     }
     
@@ -132,29 +201,54 @@ int uart_init_databits(struct _uart *uart)
         error("GetCommState() failed", 1);
         return -1;
     }
+    
+    if (!(uart->prop.dwSettableParams & WIN_SP_DATABITS)) {
+        error("Hardware/Driver doesn't support settable data bits length", 0);
+        return -1;
+    }
 
     switch (uart->data_bits) {
     case 5:
+        if (!(uart->prop.wSettableData & WIN_DATABITS_5)) {
+            error("Hardware/Driver doesn't support data bits length 5", 0);
+            return -1;
+        }
+        
         dcb.ByteSize = 5;
         break;
     case 6:
+        if (!(uart->prop.wSettableData & WIN_DATABITS_6)) {
+            error("Hardware/Driver doesn't support data bits length 6", 0);
+            return -1;
+        }
+        
         dcb.ByteSize = 6;
         break;
     case 7:
+        if (!(uart->prop.wSettableData & WIN_DATABITS_7)) {
+            error("Hardware/Driver doesn't support data bits length 7", 0);
+            return -1;
+        }
+        
         dcb.ByteSize = 7;
         break;
     case 8:
+        if (!(uart->prop.wSettableData & WIN_DATABITS_8)) {
+            error("Hardware/Driver doesn't support data bits length 8", 0);
+            return -1;
+        }
+        
         dcb.ByteSize = 8;
         break;
     default:
-        error("invalid Data Bits", 0);
+        error("Invalid Data Bits", 0);
         return -1;
     }
     
     ret = SetCommState(uart->h, &dcb);
     
     if (!ret) {
-        error("SetCommState() failed", 1);
+        error("Data Bits: SetCommState() failed", 1);
         return -1;
     }
     
@@ -174,25 +268,45 @@ int uart_init_parity(struct _uart *uart)
         return -1;
     }
     
+    if (!(uart->prop.dwSettableParams & WIN_SP_PARITY)) {
+        error("Hardware/Driver doesn't support settable/checkable parity", 0);
+        return -1;
+    }
+    
     switch (uart->parity) {
     case UART_PARITY_NO:
+        if (!(uart->prop.wSettableStopParity & WIN_PARITY_NONE)) {
+            error("Hardware/Driver doesn't support none parity", 0);
+            return -1;
+        }
+        
         dcb.Parity = NOPARITY;
         break;
     case UART_PARITY_ODD:
+        if (!(uart->prop.wSettableStopParity & WIN_PARITY_ODD)) {
+            error("Hardware/Driver doesn't support odd parity", 0);
+            return -1;
+        }
+        
         dcb.Parity = ODDPARITY;
         break;
     case UART_PARITY_EVEN:
+        if (!(uart->prop.wSettableStopParity & WIN_PARITY_EVEN)) {
+            error("Hardware/Driver doesn't support even parity", 0);
+            return -1;
+        }
+        
         dcb.Parity = EVENPARITY;
         break;
     default:
-        error("invalid Parity", 0);
+        error("Invalid Parity", 0);
         return -1;
     }
     
     ret = SetCommState(uart->h, &dcb);
     
     if (!ret) {
-        error("SetCommState() failed", 1);
+        error("Parity: SetCommState() failed", 1);
         return -1;
     }
     
@@ -212,22 +326,37 @@ int uart_init_stopbits(struct _uart *uart)
         return -1;
     }
     
+    if (!(uart->prop.dwSettableParams & WIN_SP_DATABITS)) {
+        error("Hardware/Driver doesn't support settable stop bits length", 0);
+        return -1;
+    }
+    
     switch (uart->stop_bits) {
     case 1:
+        if (!(uart->prop.wSettableStopParity & WIN_STOPBITS_10)) {
+            error("Hardware/Driver doesn't support stop bits length 1", 0);
+            return -1;
+        }
+        
         dcb.StopBits = ONESTOPBIT;
         break;
     case 2:
+        if (!(uart->prop.wSettableStopParity & WIN_STOPBITS_20)) {
+            error("Hardware/Driver doesn't support stop bits length 2", 0);
+            return -1;
+        }
+        
         dcb.StopBits = TWOSTOPBITS;
         break;
     default:
-        error("invalid Stop Bits", 0);
+        error("Invalid Stop Bits", 0);
         return -1;
     }
     
     ret = SetCommState(uart->h, &dcb);
     
     if (!ret) {
-        error("SetCommState() failed", 1);
+        error("Stop Bits: SetCommState() failed", 1);
         return -1;
     }
     
@@ -343,6 +472,14 @@ int uart_open(struct _uart *uart)
     }
     
     uart->h = h;
+    
+    ret = get_prop(uart);
+    
+    if (ret == -1) {
+        CloseHandle(h);
+        return -1;
+    }
+    
     ret = uart_init(uart);
     
     if (ret == -1) {
@@ -517,3 +654,5 @@ int uart_get_bytes(struct _uart *uart, int *bytes)
     (*bytes) = ret;
     return 0;
 }
+
+uint32_t uart_get_baud_s

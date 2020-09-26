@@ -5,9 +5,9 @@
  * Project  : libUART
  * Author   : Copyright (C) 2018-2020 Johannes Krottmayer <krjdev@gmail.com>
  * Created  : 2019-11-20
- * Modified : 2020-01-30
+ * Modified : 2020-09-26
  * Revised  : 
- * Version  : 0.1.1.0
+ * Version  : 0.1.2.0
  * License  : ISC (see file LICENSE.txt)
  *
  * NOTE: This code is currently below version 1.0, and therefore is considered
@@ -31,6 +31,7 @@ struct _uart {
     int stop_bits;
     int parity;
     int flow_ctrl;
+    COMMPROP prop;
 };
 
 extern int uart_baud_valid(int value);
