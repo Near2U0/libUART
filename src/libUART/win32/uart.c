@@ -654,5 +654,3 @@ int uart_get_bytes(struct _uart *uart, int *bytes)
     (*bytes) = ret;
     return 0;
 }
-
-uint32_t uart_get_baud_s
