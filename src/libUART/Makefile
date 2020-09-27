@@ -4,7 +4,7 @@ CC 	= gcc
 INSTALL	= install
 
 NAME	= libUART
-TARGET 	= $(NAME).so.0.4
+TARGET 	= $(NAME).so.0.5
 CFLAGS 	= -Wall -fPIC
 LDFLAGS = -shared -Wl,-soname,$(TARGET)
 
