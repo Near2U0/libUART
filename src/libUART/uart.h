@@ -1,13 +1,13 @@
 /**
  *
- * File Name: unix/uart.h
- * Title    : UNIX UART library
+ * File Name: src/libUART/uart.h
+ * Title    : libUART C Library: UART Functions
  * Project  : libUART
  * Author   : Copyright (C) 2018-2020 Johannes Krottmayer <krjdev@gmail.com>
  * Created  : 2019-11-21
- * Modified : 2020-01-30
+ * Modified : 2020-09-28
  * Revised  : 
- * Version  : 0.2.2.0
+ * Version  : 0.2.3.0
  * License  : ISC (see file LICENSE.txt)
  *
  * NOTE: This code is currently below version 1.0, and therefore is considered
@@ -16,13 +16,22 @@
  *
  */
 
-#ifndef LIBUART_UNIX_UART_H
-#define LIBUART_UNIX_UART_H
+#ifndef LIBUART_UART_H
+#define LIBUART_UART_H
+
+#ifdef _WIN32
+#include "Windows.h"
+#endif
 
 #define DEV_NAME_LEN        256
 
 struct _uart {
+#ifdef __unix__
     int fd;
+#elif _WIN32
+    HANDLE h;
+    COMMPROP prop;
+#endif
     char dev[DEV_NAME_LEN];
     int baud;
     int data_bits;
