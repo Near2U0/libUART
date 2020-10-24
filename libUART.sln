@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29509.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libUART", "libUART.vcxproj", "{81B0AB0D-D42D-48B5-8783-A9120ADCE894}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libUART", "vs\libUART.vcxproj", "{81B0AB0D-D42D-48B5-8783-A9120ADCE894}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2CC3F5AB-8595-4264-8C35-0719FA6A93BD}"
 	ProjectSection(SolutionItems) = preProject
@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libUART_demo", "libUART_demo.vcxproj", "{576A21E0-FF9E-41CE-877B-B8966F6681CA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libUART_demo", "vs\libUART_demo.vcxproj", "{576A21E0-FF9E-41CE-877B-B8966F6681CA}"
 	ProjectSection(ProjectDependencies) = postProject
 		{81B0AB0D-D42D-48B5-8783-A9120ADCE894} = {81B0AB0D-D42D-48B5-8783-A9120ADCE894}
 	EndProjectSection
