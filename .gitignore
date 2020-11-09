@@ -24,3 +24,6 @@ bld/
 [Oo]bj/
 [Ll]og/
 *.aps
+
+# Git
+GIT_COMMIT.txt
