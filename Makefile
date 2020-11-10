@@ -19,19 +19,29 @@ TARGET_LIBUART_CXX	= $(SO_MINOR_LIBUART_CXX)
 TARGET_LIBUART_DEMO	= $(NAME_LIBUART_DEMO)
 TARGET_LIBUART_CXX_DEMO	= $(NAME_LIBUART_CXX_DEMO)
 
+DIR_SRC			= src
+DIR_LIBUART		= $(DIR_SRC)/$(NAME_LIBUART)
+DIR_LIBUART_CXX		= $(DIR_SRC)/$(NAME_LIBUART_CXX)
+DIR_LIBUART_DEMO	= $(DIR_SRC)/$(NAME_LIBUART_DEMO)
+DIR_LIBUART_CXX_DEMO	= $(DIR_SRC)/$(NAME_LIBUART_CXX_DEMO)
+
+GIT_VERSION		= \"$(shell git describe --abbrev=8 --always --tag)\"
+
 RM			= rm -rf
 LN			= ln -frs
 CC			= gcc
 CXX			= g++
 INSTALL			= install
 
-CFLAGS			+= -Wall
-CFLAGS			+= -Wextra
-CFLAGS_LIB		+= -fPIC
+CCFLAGS			+= -Wall
+CCFLAGS			+= -Wextra
+CCFLAGS			+= -DLIBUART_GITVERSION=$(GIT_VERSION)
+CCFLAGS_LIB		+= -fPIC
 
 CXXFLAGS		+= -std=c++11
 CXXFLAGS		+= -Wall
 CXXFLAGS		+= -Wextra
+CXXFLAGS		+= -DLIBUART_GITVERSION=$(GIT_VERSION)
 CXXFLAGS_LIB		+= -fPIC
 
 LDFLAGS_LIBUART		+= -shared
@@ -60,9 +70,9 @@ libUART: $(OBJ_LIBUART)
 	@echo "[LD] $(TARGET_LIBUART)"
 	@$(CC) $(LDFLAGS_LIBUART) -o $(TARGET_LIBUART)  $(OBJ_LIBUART)
 
-src/libUART/%.o: src/libUART/%.c
+$(DIR_LIBUART)/%.o: $(DIR_LIBUART)/%.c
 	@echo "[CC] $<"
-	@$(CC) $(CFLAGS) $(CFLAGS_LIB) -c -o $@ $<
+	@$(CC) $(CCFLAGS) $(CCFLAGS_LIB) -c -o $@ $<
 
 # Build libUART C Demo Application
 libUART_Demo: $(OBJ_LIBUART_DEMO)
@@ -71,7 +81,7 @@ libUART_Demo: $(OBJ_LIBUART_DEMO)
 
 src/libUART_Demo/%.o: src/libUART_Demo/%.c
 	@echo "[CC] $<"
-	@$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CCFLAGS) -c -o $@ $<
 
 # Build libUART C++ Library
 libUART_CXX: $(OBJ_LIBUART_CXX)
@@ -88,8 +98,39 @@ libUART_CXX_Demo: $(OBJ_LIBUART_CXX_DEMO)
 	@$(CXX) -o $(TARGET_LIBUART_CXX_DEMO) $(OBJ_LIBUART_CXX_DEMO)
 
 src/libUART_CXX_Demo/%.o: src/libUART_CXX_Demo/%.cpp
-	@echo "[CC] $<"
+	@echo "[CXX] $<"
 	@$(CXX) $(CFLAGS) -c -o $@ $<
+
+# Install all
+install: install_libUART
+
+# Install libUART C Library
+.PHONY: install_libUART
+install_libUART: libUART
+	@echo "[INSTALL] $(TARGET_LIBUART)"
+	@$(INSTALL) -d $(DESTDIR)$(PREFIX)/lib64
+	@$(INSTALL) -m 755 -D $(TARGET_LIBUART) $(DESTDIR)$(PREFIX)/lib64
+	@echo "[INSTALL] $(SO_MAJOR_LIBUART)"
+	@$(LN) $(DESTDIR)$(PREFIX)/lib64/$(TARGET_LIBUART) $(DESTDIR)$(PREFIX)/lib64/$(SO_MAJOR_LIBUART)
+	@echo "[INSTALL] $(SO_LIBUART)"
+	@$(LN) $(DESTDIR)$(PREFIX)/lib64/$(SO_MAJOR_LIBUART) $(DESTDIR)$(PREFIX)/lib64/$(SO_LIBUART)
+	@echo "[INSTALL] UART.h"
+	@$(INSTALL) -d $(DESTDIR)$(PREFIX)/include
+	@$(INSTALL) -m 644 -D $(DIR_LIBUART)/UART.h $(DESTDIR)$(PREFIX)/include
+
+# Install libUART C++ Library
+.PHONY: install_libUART_CXX
+install_libUART_CXX: libUART_CXX
+	@echo "[INSTALL] $(TARGET_LIBUART_CXX)"
+	@$(INSTALL) -d $(DESTDIR)$(PREFIX)/lib64
+	@$(INSTALL) -m 755 -D $(TARGET_LIBUART_CXX) $(DESTDIR)$(PREFIX)/lib64
+	@echo "[INSTALL] $(SO_MAJOR_LIBUART_CXX)"
+	@$(LN) $(DESTDIR)$(PREFIX)/lib64/$(TARGET_LIBUART_CXX) $(DESTDIR)$(PREFIX)/lib64/$(SO_MAJOR_LIBUART_CXX)
+	@echo "[INSTALL] $(SO_LIBUART_CXX)"
+	@$(LN) $(DESTDIR)$(PREFIX)/lib64/$(SO_MAJOR_LIBUART_CXX) $(DESTDIR)$(PREFIX)/lib64/$(SO_LIBUART_CXX)
+	@echo "[INSTALL] UART.hpp"
+	@$(INSTALL) -d $(DESTDIR)$(PREFIX)/include
+	@$(INSTALL) -m 644 -D $(DIR_LIBUART_CXX)/UART.hpp $(DESTDIR)$(PREFIX)/include
 
 # Clean
 .PHONY: clean
